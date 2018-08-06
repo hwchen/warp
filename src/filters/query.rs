@@ -1,7 +1,7 @@
 //! Query Filters
 
 use serde::de::DeserializeOwned;
-use serde_urlencoded;
+use serde_qs::Config;
 
 use ::filter::{Filter, filter_fn_one, One};
 use ::reject::{self, Rejection};
@@ -14,7 +14,10 @@ pub fn query<T: DeserializeOwned + Send>() -> impl Filter<Extract=One<T>, Error=
         route
             .query()
             .and_then(|q| {
-                serde_urlencoded::from_str(q)
+                lazy_static! {
+                    static ref QS_NON_STRICT: Config = Config::new(5, false);
+                }
+                QS_NON_STRICT.deserialize_str(q)
                     .ok()
             })
             .map(Ok)
